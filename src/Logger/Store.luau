@@ -27,7 +27,7 @@ local mirroredRevision = -1
 local syncThread: thread? = nil
 
 local function isEdit(): boolean
-	return not RunService:IsRunning()
+	return RunService:IsEdit()
 end
 
 local function settingsKey(): string

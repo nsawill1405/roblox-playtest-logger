@@ -10,7 +10,7 @@ local Capture = require(script.Parent.Capture)
 local Context = {}
 
 function Context.mode(): string
-	if not RunService:IsRunning() then
+	if RunService:IsEdit() then
 		return "EditMode"
 	elseif RunService:IsRunMode() then
 		return "RunMode"
@@ -55,7 +55,7 @@ function Context.describe(): string
 end
 
 local function guiRoot(): BasePlayerGui?
-	if RunService:IsRunning() then
+	if not RunService:IsEdit() then
 		local player = Players.LocalPlayer
 		local playerGui = player and player:FindFirstChildOfClass("PlayerGui")
 		return playerGui

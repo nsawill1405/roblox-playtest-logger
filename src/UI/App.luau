@@ -756,7 +756,7 @@ function App:renderEntry(entry: EntryModel.Entry, order: number)
 	Build.button("Retake Screenshot", "subtle", { LayoutOrder = 1, Parent = actions }, function()
 		self:retake(entry)
 	end)
-	if entry.camera and not RunService:IsRunning() then
+	if entry.camera and RunService:IsEdit() then
 		Build.button("Go to View", "subtle", { LayoutOrder = 2, Parent = actions }, function()
 			workspace.CurrentCamera.CFrame = Capture.toCFrame(entry.camera :: EntryModel.CameraView)
 		end)
@@ -822,7 +822,7 @@ function App:revealFolder()
 		Selection:Set({ root })
 	else
 		self:showBanner(
-			if RunService:IsRunning()
+			if not RunService:IsEdit()
 				then "ServerStorage/PlaytestLogs is available in Edit mode"
 				else "No logs saved in this place yet"
 		)
