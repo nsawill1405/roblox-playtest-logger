@@ -279,12 +279,12 @@ function Store.init(pluginRef: Plugin)
 			doc.entries = placeEntries
 			writeDoc(doc)
 		end
-		if placeRevision == doc.revision and #doc.pending == 0 then
+		local inSync = placeRevision == doc.revision and #doc.pending == 0
+		local nothingSaved = not placeRevision and #doc.entries == 0 and #doc.pending == 0
+		if inSync or nothingSaved then
 			mirroredRevision = doc.revision
-		elseif placeRevision or #doc.entries > 0 or #doc.pending > 0 then
-			mirror(doc)
 		else
-			mirroredRevision = doc.revision
+			mirror(doc)
 		end
 	end
 	if not syncThread then
