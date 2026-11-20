@@ -1,0 +1,7 @@
+*.rbxm
+*.rbxmx
+*.rbxl
+*.rbxlx
+.DS_Store
+sourcemap.json
+.worktrees/
