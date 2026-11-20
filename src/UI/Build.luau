@@ -42,9 +42,15 @@ function Build.padding(top: number, right: number?, bottom: number?, left: numbe
 	})
 end
 
-function Build.list(spacing: number?, horizontal: boolean?, align: Enum.VerticalAlignment?): UIListLayout
+function Build.list(
+	spacing: number?,
+	horizontal: boolean?,
+	align: Enum.VerticalAlignment?,
+	wraps: boolean?
+): UIListLayout
 	return Build.make("UIListLayout", {
 		Padding = UDim.new(0, spacing or 6),
+		Wraps = wraps == true,
 		FillDirection = if horizontal then Enum.FillDirection.Horizontal else Enum.FillDirection.Vertical,
 		SortOrder = Enum.SortOrder.LayoutOrder,
 		VerticalAlignment = align or Enum.VerticalAlignment.Top,
@@ -201,7 +207,7 @@ function Build.row(props: { [string]: any }?, spacing: number?): Frame
 	for key, value in props or {} do
 		base[key] = value
 	end
-	return Build.make("Frame", base, { Build.list(spacing or 6, true, Enum.VerticalAlignment.Center) })
+	return Build.make("Frame", base, { Build.list(spacing or 6, true, Enum.VerticalAlignment.Center, true) })
 end
 
 return Build
