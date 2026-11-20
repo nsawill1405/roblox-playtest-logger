@@ -138,6 +138,28 @@ local function readPlaceBlob(name: string): string?
 	return if ok then result else nil
 end
 
+-- Reads the revision and entries saved with the place (entries.json), if any.
+local function readPlaceDoc(): (number?, { EntryModel.Entry })
+	local ok, revision, entries = pcall(function()
+		local root = ServerStorage:FindFirstChild(Store.ROOT_NAME)
+		local item = root and root:FindFirstChild("entries.json")
+		if not item or not item:IsA("LuaSourceContainer") then
+			return nil, {}
+		end
+		local text = LongString.extract((item :: any).Source)
+		local decoded = text and HttpService:JSONDecode(text)
+		if type(decoded) ~= "table" then
+			return nil, {}
+		end
+		return if type(decoded.revision) == "number" then decoded.revision else 0,
+			EntryModel.sanitizeCollection(decoded.entries)
+	end)
+	if not ok then
+		return nil, {}
+	end
+	return revision, entries
+end
+
 local function writePlaceBlob(root: Instance, name: string, data: string)
 	local folderName, leaf = splitName(name)
 	local folder = ensureChild(root, folderName, "Folder")
@@ -204,7 +226,12 @@ local function mirror(doc: Doc)
 			LongString.comment(Markdown.build(doc.entries, "ServerStorage/" .. Store.ROOT_NAME)) .. "\nreturn nil\n"
 		)
 		local json = ensureChild(root, "entries.json", "ModuleScript") :: ModuleScript
-		setSource(json, "return " .. LongString.literal(HttpService:JSONEncode({ entries = doc.entries })) .. "\n")
+		setSource(
+			json,
+			"return "
+				.. LongString.literal(HttpService:JSONEncode({ revision = doc.revision, entries = doc.entries }))
+				.. "\n"
+		)
 	end)
 	if recording then
 		ChangeHistoryService:FinishRecording(recording, Enum.FinishRecordingOperation.Commit)
@@ -242,9 +269,19 @@ function Store.init(pluginRef: Plugin)
 	placeKey = resolvePlaceKey()
 	local doc = readDoc()
 	cache = doc
-	if isEdit() and #doc.entries > 0 then
-		local root = Store.root(false)
-		if not root or not root:FindFirstChild("entries.json") or #doc.pending > 0 then
+	if isEdit() then
+		-- The place is the source of truth when it is newer than this machine's settings
+		-- (opened on another workstation, or settings were cleared).
+		local placeRevision, placeEntries = readPlaceDoc()
+		local settingsEmpty = doc.revision == 0 and #doc.entries == 0
+		if placeRevision and (placeRevision > doc.revision or settingsEmpty) then
+			doc.revision = placeRevision
+			doc.entries = placeEntries
+			writeDoc(doc)
+		end
+		if placeRevision == doc.revision and #doc.pending == 0 then
+			mirroredRevision = doc.revision
+		elseif placeRevision or #doc.entries > 0 or #doc.pending > 0 then
 			mirror(doc)
 		else
 			mirroredRevision = doc.revision
