@@ -275,8 +275,16 @@ function Store.init(pluginRef: Plugin)
 		local placeRevision, placeEntries = readPlaceDoc()
 		local settingsEmpty = doc.revision == 0 and #doc.entries == 0
 		if placeRevision and (placeRevision > doc.revision or settingsEmpty) then
-			doc.revision = placeRevision
-			doc.entries = placeEntries
+			-- Keep playtest entries whose captures were never flushed into the place.
+			local merged = table.clone(placeEntries)
+			for _, entry in doc.entries do
+				local unflushed = table.find(doc.pending, entry.screenshot) or table.find(doc.pending, entry.consoleLog)
+				if unflushed and not EntryModel.find(placeEntries, entry.id) then
+					table.insert(merged, entry)
+				end
+			end
+			doc.revision = if #merged > #placeEntries then placeRevision + 1 else placeRevision
+			doc.entries = merged
 			writeDoc(doc)
 		end
 		local inSync = placeRevision == doc.revision and #doc.pending == 0
